@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Globale Maven settings voor de devcontainer (in het image: /opt/maven/conf/settings.xml).
+  Alle downloads lopen via de Artifactory van de organisatie; inloggen is niet nodig, we lezen alleen.
+  Eigen aanvullingen kunnen nog steeds in ~/.m2/settings.xml.
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+    <mirrors>
+        <mirror>
+            <id>artifactory</id>
+            <name>Artifactory van de organisatie</name>
+            <!-- TODO: vervangen door de Artifactory URL, bijv.
+                 https://artifactory.organisatie.nl/artifactory/maven-remote
+                 Tot die tijd wijst de mirror naar Maven Central zelf, zodat alles blijft werken. -->
+            <url>https://repo1.maven.org/maven2</url>
+            <mirrorOf>*</mirrorOf>
+        </mirror>
+    </mirrors>
+</settings>

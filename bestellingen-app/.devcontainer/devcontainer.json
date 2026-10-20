@@ -1,0 +1,22 @@
+{
+  "name": "bestellingen-app (Spring Boot + Postgres)",
+  "dockerComposeFile": "compose.yaml",
+  "service": "dev",
+  "runServices": ["dev", "postgres"],
+  "workspaceFolder": "/workspaces/bestellingen-app",
+  "shutdownAction": "stopCompose",
+
+  "containerUser": "developer",
+  "remoteUser": "developer",
+  "updateRemoteUserUID": true,
+
+  // Geen forwardPorts: compose.yaml publiceert 8080 en 5432 al op localhost, ook zonder IDE.
+
+  "postCreateCommand": "mvn -B -q -DskipTests package",
+
+  "customizations": {
+    "jetbrains": {
+      "backend": "IntelliJ"
+    }
+  }
+}

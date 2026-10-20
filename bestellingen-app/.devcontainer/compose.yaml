@@ -1,0 +1,60 @@
+# Alleen kleine letters: de devcontainer CLI haalt streepjes uit de projectnaam, podman-compose niet.
+# Met deze naam zijn ze het eens, en vinden handmatige podman-compose commando's dezelfde containers.
+name: bestellingenapp
+
+services:
+  # De container waarin je ontwikkelt: hier draaien Maven en de applicatie.
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sleep infinity
+    # Deelt het netwerk van de postgres container: de database is hier gewoon localhost:5432, net als
+    # op je eigen machine. Daardoor werken dezelfde instellingen binnen én buiten de devcontainer.
+    network_mode: service:postgres
+    # Rootless podman: map je eigen gebruiker 1-op-1 naar de container, zodat bestanden
+    # in de gemounte workspace niet van een "vreemde" uid worden.
+    userns_mode: keep-id
+    volumes:
+      - ..:/workspaces/bestellingen-app:cached
+      - maven-repo:/home/developer/.m2/repository
+    environment:
+      PGHOST: localhost
+      PGUSER: bestellingen
+      PGPASSWORD: bestellingen
+      PGDATABASE: bestellingen
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    # Podman wil volledig gekwalificeerde image-namen (docker.io/...), anders volgt er een prompt of fout.
+    image: docker.io/library/postgres:18
+    environment:
+      POSTGRES_DB: bestellingen
+      POSTGRES_USER: bestellingen
+      POSTGRES_PASSWORD: bestellingen
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    # Omdat 'dev' dit netwerk deelt, worden hier ook de poorten van de applicatie gepubliceerd.
+    # Alleen op 127.0.0.1, zodat ze niet vanaf het netwerk bereikbaar zijn. De applicatietesten
+    # (aparte repo) draaien op je eigen machine en gebruiken deze poorten.
+    ports:
+      - "127.0.0.1:8080:8080" # bestellingen-app (start je zelf in de devcontainer)
+      - "127.0.0.1:5432:5432" # Postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bestellingen -d bestellingen"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  # Vaste naam, zodat de Maven cache een rebuild van de devcontainer overleeft.
+  maven-repo:
+    name: devcontainers-maven-repo
+  postgres-data:
+
+# podman-compose zet standaard alle containers in één pod; dat gaat niet samen met
+# userns_mode: keep-id. Docker Compose negeert dit blok.
+x-podman:
+  in_pod: false
